@@ -1,5 +1,20 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/card'
+import { PromptManager } from '@/components/ai/PromptManager'
 export default function AI(){
-  return <AppShell><h1 className="text-2xl font-bold">AI Assistant</h1><p className="text-sm text-zinc-500">Provider abstraction — switch providers without rebuilding. Safety: never invent facts.</p><div className="grid md:grid-cols-2 gap-6 mt-6"><Card><h3 className="font-semibold">Generate Outreach</h3><textarea placeholder="I want to offer website redesign and local SEO..." className="w-full border rounded-lg p-3 mt-3 text-sm" rows={3}/><button className="mt-3 px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm">Generate with AI</button></Card><Card><h3 className="font-semibold">Prompt Templates</h3><p className="text-sm text-zinc-500 mt-2">Admin can edit system instructions + variables: {'{{business_name}} {{person_name}} {{position}} {{website}} {{niche}} {{location}} {{service}}'}</p></Card></div><Card className="mt-6"><h3 className="font-semibold">Other capabilities</h3><ul className="text-sm mt-2 list-disc ml-5 space-y-1"><li>Personalization (lead → tailored message)</li><li>Lead analysis (website/marketing/SEO opportunities)</li><li>Follow-up generation (uses thread context)</li><li>Reply assistant (suggest response — user approves)</li></ul></Card></AppShell>
+  return <AppShell><h1 className="text-2xl font-bold">AI Assistant</h1><p className="text-sm text-zinc-500">Provider abstraction — switch providers without rebuilding. Safety: never invent business facts, names, stats.</p>
+    <div className="grid md:grid-cols-2 gap-6 mt-6">
+      <Card><h3 className="font-semibold">Prompt Template (editable)</h3><div className="mt-3"><PromptManager /></div></Card>
+      <Card><h3 className="font-semibold">Capabilities</h3>
+        <ul className="text-sm mt-3 space-y-2 list-disc ml-5">
+          <li><b>Generate outreach</b> — from user instruction + variables</li>
+          <li><b>Personalize</b> — template + lead → tailored (no hallucination)</li>
+          <li><b>Analyze lead</b> — website/marketing/SEO opportunities via /api/ai/analyze</li>
+          <li><b>Follow-up</b> — uses thread context via /api/ai/generate</li>
+          <li><b>Reply assistant</b> — suggests response, user approves before send</li>
+        </ul>
+        <p className="text-xs text-zinc-500 mt-4">Free tier: FreeAIProvider variable substitution. Paid: set AI_API_KEY → OpenAIProvider.</p>
+      </Card>
+    </div>
+  </AppShell>
 }
