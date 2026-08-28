@@ -127,3 +127,23 @@ create policy "users own integrations" on integrations for all using (auth.uid()
 create policy "users own oauth" on oauth_accounts for all using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "users own extension_sessions" on extension_sessions for all using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "users own activity_logs" on activity_logs for all using (auth.uid()=user_id) with check (auth.uid()=user_id);
+
+-- User settings (per-user preferences)
+create table if not exists user_settings (
+  user_id uuid primary key references users(id) on delete cascade,
+  site_name text default 'Client Hunting CRM',
+  default_country text default 'US',
+  timezone text default 'UTC',
+  ai_model text default 'gpt-4o-mini',
+  campaign_daily_limit int default 50,
+  campaign_delay_ms int default 800,
+  follow_up_day0 boolean default true,
+  follow_up_day3 boolean default true,
+  follow_up_day7 boolean default false,
+  stop_on_replied boolean default true,
+  stop_on_unsubscribed boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table user_settings enable row level security;
+create policy "users own settings" on user_settings for all using (auth.uid()=user_id) with check (auth.uid()=user_id);
