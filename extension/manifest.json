@@ -3,6 +3,11 @@
   "name": "Client Hunter",
   "version": "0.2.0",
   "description": "Collect publicly available business leads and import them into your Client Hunter CRM.",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
   "permissions": [
     "storage",
     "activeTab",
@@ -17,7 +22,12 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Client Hunter"
+    "default_title": "Client Hunter",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   },
   "background": {
     "service_worker": "background.js"

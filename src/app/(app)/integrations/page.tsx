@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { GmailPanel } from '@/components/integrations/GmailPanel'
 import { getSupportedSources } from '@/lib/sources/registry'
+import { Suspense } from 'react'
 
 export default function Integrations(){
   const aiConfigured = !!process.env.AI_API_KEY
@@ -12,7 +13,9 @@ export default function Integrations(){
     <p className="text-sm text-zinc-500 mt-1">Secrets stay on the server. The extension never receives API keys or OAuth tokens.</p>
 
     <div className="grid md:grid-cols-2 gap-6 mt-6">
-      <GmailPanel />
+      <Suspense fallback={<Card><p className="text-sm text-zinc-500">Loading Gmail status…</p></Card>}>
+        <GmailPanel />
+      </Suspense>
 
       <Card>
         <div className="flex justify-between items-start"><h3 className="font-semibold">AI provider</h3><Badge tone={aiConfigured?'green':'yellow'}>{aiConfigured?'Configured ✓':'Free mode'}</Badge></div>
