@@ -1,15 +1,38 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { GmailPanel } from '@/components/integrations/GmailPanel'
+import { getSupportedSources } from '@/lib/sources/registry'
+
 export default function Integrations(){
-  return <AppShell><h1 className="text-2xl font-bold">Integrations</h1>
+  const aiConfigured = !!process.env.AI_API_KEY
+  const sources = getSupportedSources()
+  return <AppShell>
+    <h1 className="text-2xl font-bold">Integrations</h1>
+    <p className="text-sm text-zinc-500 mt-1">Secrets stay on the server. The extension never receives API keys or OAuth tokens.</p>
+
     <div className="grid md:grid-cols-2 gap-6 mt-6">
-      <Card><h3 className="font-semibold">Gmail <Badge>OAuth 2.0</Badge></h3><p className="text-sm text-zinc-500 mt-1">Secure token storage in oauth_accounts, never exposed to client. Send, sync replies, thread matching.</p>
-        <div className="flex gap-2 mt-3"><a href="/api/integrations/gmail" className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm">Connect Gmail</a><form action="/api/emails/sync" method="POST"><button className="px-4 py-2 border rounded-lg text-sm">Sync Replies</button></form></div>
-        <p className="text-xs text-zinc-500 mt-3">Set GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI in Vercel env.</p>
+      <GmailPanel />
+
+      <Card>
+        <div className="flex justify-between items-start"><h3 className="font-semibold">AI provider</h3><Badge tone={aiConfigured?'green':'yellow'}>{aiConfigured?'Configured ✓':'Free mode'}</Badge></div>
+        <p className="text-sm text-zinc-500 mt-1">{aiConfigured ? `OpenAI provider active (${process.env.AI_MODEL || 'gpt-4o-mini'}).` : 'AI_API_KEY is not set. Generation uses safe variable substitution only — it never invents business facts.'}</p>
+        <a href="/ai" className="inline-block mt-3 px-4 py-2 border border-zinc-200 bg-white rounded-lg text-sm">Open AI workspace</a>
       </Card>
-      <Card><h3 className="font-semibold">Meta (Facebook / Instagram) <Badge tone="yellow">Official API only</Badge></h3><p className="text-sm text-zinc-500 mt-1">Where API unavailable, browser-assisted manual workflow — no CAPTCHA/bypass.</p><button className="mt-3 px-4 py-2 border rounded-lg text-sm">Configure Meta App</button></Card>
+
+      <Card>
+        <div className="flex justify-between items-start"><h3 className="font-semibold">Meta (Facebook / Instagram)</h3><Badge tone="yellow">Official API only</Badge></div>
+        <p className="text-sm text-zinc-500 mt-1">Messaging requires an approved Meta app with the relevant permissions. Until that is configured this integration reports NOT CONFIGURED — there is no unauthorised DM or scraping path.</p>
+        <p className="text-xs text-zinc-500 mt-2">Where no API exists, use the browser-assisted flow: open the profile and contact it manually.</p>
+      </Card>
+
+      <Card>
+        <h3 className="font-semibold">Source adapters</h3>
+        <ul className="mt-3 space-y-1 text-sm">{sources.map(s=>
+          <li key={s.id} className="flex justify-between gap-2"><span>{s.name}</span><Badge tone={s.id==='website'?'green':'default'}>{s.id==='website'?'Implemented ✓':'Adapter registered'}</Badge></li>)}
+        </ul>
+        <p className="text-xs text-zinc-500 mt-3">Only the website adapter performs live extraction today (public contact details on the page you open). Others are registered interfaces awaiting official API access.</p>
+      </Card>
     </div>
-    <Card className="mt-6"><h3 className="font-semibold">Supported Sources</h3><p className="text-sm text-zinc-500">google-search • google-maps • business-directories • website • facebook • instagram • linkedin • other — each via SourceAdapter at src/lib/sources/*</p></Card>
   </AppShell>
 }

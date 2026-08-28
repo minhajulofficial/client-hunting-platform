@@ -1,5 +1,15 @@
 import { AppShell } from '@/components/layout/AppShell'
-import { Card } from '@/components/ui/card'
+import { TemplateManager } from '@/components/templates/TemplateManager'
+import { SetupRequired } from '@/components/ui/states'
+import { isSupabaseConfigured } from '@/lib/supabase/server'
+
 export default function Templates(){
-  return <AppShell><div className="flex justify-between"><h1 className="text-2xl font-bold">Templates</h1><button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm">New Template</button></div><Card className="mt-6"><p className="text-sm">Variables: {"{{first_name}} {{business_name}} {{city}} {{website}} {{service}}"} — subject + body + service/niche/country/language + status.</p><pre className="bg-zinc-50 p-4 rounded mt-3 text-xs">{"Subject: Quick idea for {{business_name}} in {{city}}\nBody: Hi {{first_name}}, I noticed {{business_name}}..."}</pre></Card></AppShell>
+  const configured = isSupabaseConfigured()
+  return <AppShell>
+    <h1 className="text-2xl font-bold">Templates</h1>
+    <p className="text-sm text-zinc-500 mt-1">Stored in <code className="bg-zinc-100 px-1 rounded">email_templates</code>. Variables resolve before sending.</p>
+    <div className="mt-6">
+      {configured ? <TemplateManager /> : <SetupRequired what="Database" vars={['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_ANON_KEY']} />}
+    </div>
+  </AppShell>
 }
