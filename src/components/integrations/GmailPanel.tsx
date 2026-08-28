@@ -29,18 +29,21 @@ export function GmailPanel(){
     }catch(e){ setStatus('disconnected'); setDetail(e instanceof Error? e.message:'check failed') }
   },[])
 
-  useEffect(()=>{ check() },[check])
-
-  // Handle callback redirect status
+  // Handle callback redirect FIRST — if ?gmail=connected, trust it and skip check
   useEffect(()=>{
     if(gmailStatus==='connected'){
       setStatus('connected'); setDetail('Gmail connected successfully ✓')
+      return // Don't run check — we know it's connected
     } else if(gmailStatus==='error'){
       setStatus('disconnected'); setDetail(gmailMsg ? decodeURIComponent(gmailMsg) : 'Connection failed')
+      return
     } else if(gmailStatus==='missing_code'){
       setStatus('disconnected'); setDetail('Authorization code missing. Try connecting again.')
+      return
     }
-  },[gmailStatus, gmailMsg])
+    // No URL param — run normal check
+    check()
+  },[gmailStatus, gmailMsg, check])
 
   async function testConn(){ setTesting(true); await check(); setTesting(false) }
 

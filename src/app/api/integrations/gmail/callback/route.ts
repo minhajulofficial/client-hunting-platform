@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
 
 export async function GET(req: Request){
   const url = new URL(req.url)
@@ -17,6 +17,7 @@ export async function GET(req: Request){
 
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || base + '/api/integrations/gmail/callback'
 
+    // Exchange code for tokens
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -31,21 +32,31 @@ export async function GET(req: Request){
     const tokens = await tokenRes.json()
     if(!tokenRes.ok) throw new Error(tokens.error_description || JSON.stringify(tokens))
 
-    // Use service role to bypass RLS for oauth_accounts + integrations upserts
-    const svc = await createServiceClient() as any
-
-    // Get user from session cookie
-    const { createClient } = await import('@/lib/supabase/server')
+    // Get user from session
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
+    const { data: { user }, error: authErr } = await supabase.auth.getUser()
+    if(authErr) throw new Error('Auth error: ' + authErr.message)
     if(!user) return NextResponse.redirect(new URL('/integrations?gmail=error&msg='+encodeURIComponent('No active session. Log in first, then connect Gmail.'), base))
 
+    // Use service role for all DB writes (bypasses RLS)
+    const svc = await createServiceClient() as any
+
+    // 1. Ensure public.users row exists (FK requirement for oauth_accounts)
+    const { error: userErr } = await svc.from('users').upsert({
+      id: user.id,
+      email: user.email || 'unknown',
+      name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+      created_at: user.created_at || new Date().toISOString(),
+    }, { onConflict: 'id' })
+    if(userErr) throw new Error('Failed to ensure user exists: ' + userErr.message)
+
+    // 2. Save OAuth tokens
     const expiryDate = tokens.expiry_date
       ? new Date(tokens.expiry_date).toISOString()
       : new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString()
 
-    const { error: upsertErr } = await svc.from('oauth_accounts').upsert({
+    const { error: tokenErr } = await svc.from('oauth_accounts').upsert({
       user_id: user.id,
       provider: 'gmail',
       access_token: tokens.access_token,
@@ -53,8 +64,9 @@ export async function GET(req: Request){
       expiry_date: expiryDate,
       scope: tokens.scope || 'gmail.send gmail.readonly gmail.modify',
     }, { onConflict: 'user_id,provider' })
-    if(upsertErr) throw new Error('Failed to save OAuth tokens: ' + upsertErr.message)
+    if(tokenErr) throw new Error('Failed to save tokens: ' + tokenErr.message)
 
+    // 3. Mark integration as connected
     await svc.from('integrations').upsert({
       user_id: user.id,
       provider: 'gmail',
