@@ -16,18 +16,18 @@ export default async function Leads({ searchParams }: { searchParams: Promise<Re
   const { data: leads } = await q
   const list=leads||[]
   return <AppShell>
-    <div className="flex flex-wrap gap-2 items-center justify-between"><h1 className="text-2xl font-bold">Leads</h1><div className="flex gap-2"><Link href="/leads?status=NEW" className="px-3 py-2 border rounded-lg text-sm">Filter NEW</Link><CsvExport leads={list} /><Link href="/leads" className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm">Add Lead</Link></div></div>
+    <div className="flex flex-wrap gap-2 items-center justify-between"><h1 className="text-2xl font-bold">Leads</h1><div className="flex gap-2"><Link href="/leads?status=NEW" className="px-3 py-2 border border-zinc-200 bg-white rounded-lg text-sm">Filter NEW</Link><CsvExport leads={list} /><Link href="/leads" className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm">Add Lead</Link></div></div>
     <Card className="mt-4">
       <form className="flex flex-wrap gap-2 mb-4" method="GET">
-        <input name="country" placeholder="Country" defaultValue={params.country||''} className="px-3 py-1.5 border rounded-full text-xs" />
-        <input name="city" placeholder="City" defaultValue={params.city||''} className="px-3 py-1.5 border rounded-full text-xs" />
-        <input name="niche" placeholder="Niche" defaultValue={params.niche||''} className="px-3 py-1.5 border rounded-full text-xs" />
-        <select name="status" defaultValue={params.status||''} className="px-3 py-1.5 border rounded-full text-xs"><option value="">All statuses</option><option>NEW</option><option>VERIFIED</option><option>CONTACTED</option><option>REPLIED</option><option>WON</option></select>
+        <input name="country" placeholder="Country" defaultValue={params.country||''} className="px-3 py-1.5 border border-zinc-200 rounded-full text-xs" />
+        <input name="city" placeholder="City" defaultValue={params.city||''} className="px-3 py-1.5 border border-zinc-200 rounded-full text-xs" />
+        <input name="niche" placeholder="Niche" defaultValue={params.niche||''} className="px-3 py-1.5 border border-zinc-200 rounded-full text-xs" />
+        <select name="status" defaultValue={params.status||''} className="px-3 py-1.5 border border-zinc-200 rounded-full text-xs bg-white"><option value="">All statuses</option><option>NEW</option><option>VERIFIED</option><option>CONTACTED</option><option>REPLIED</option><option>WON</option></select>
         <button type="submit" className="px-4 py-1.5 bg-zinc-900 text-white rounded-full text-xs">Search</button>
       </form>
       <LeadTable leads={list} />
-      <p className="text-xs text-zinc-500 mt-3">Filters: Country • State • City • Niche • Position • Email status • Phone • Website • Facebook/Instagram/LinkedIn • Status • Project • Date • Score • Tags. Deduplication on email/phone/domain/name.</p>
+      <p className="text-xs text-zinc-500 mt-3">Bulk: select via extension preview or CSV; then create campaign. Deduplication on email/phone/domain/name server-side.</p>
     </Card>
-    <Card className="mt-6"><CsvImport onDone={()=>{}} /></Card>
+    <Card className="mt-6"><CsvImport /></Card>
   </AppShell>
 }
