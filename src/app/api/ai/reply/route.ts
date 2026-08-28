@@ -3,7 +3,11 @@ import { resolveUser } from '@/lib/api/auth'
 import { AIService } from '@/lib/ai/service'
 import { z } from 'zod'
 
-const schema = z.object({ lead: z.record(z.string(), z.string()), leadId: z.string().uuid().optional().nullable() })
+const schema = z.object({
+  inbound: z.string().min(1, 'inbound message required'),
+  context: z.string().optional().default(''),
+  leadId: z.string().uuid().optional().nullable(),
+})
 
 export async function OPTIONS(){ return preflight() }
 
@@ -15,14 +19,14 @@ export async function POST(req: Request){
   let json: unknown
   try{ json = await req.json() }catch{ return fail('Invalid JSON body', 400) }
   const parsed = schema.safeParse(json)
-  if(!parsed.success) return fail('Validation failed - check required fields', 422)
+  if(!parsed.success) return fail('Validation failed - inbound message required', 422)
 
   const svc = new AIService()
   const provider = svc.getProvider().id
   try{
-    const text = await svc.analyzeLead(parsed.data.lead)
-    await supabase.from('ai_generations').insert({ user_id: auth.userId, lead_id: parsed.data.leadId ?? null, input:{ type:'analyze', lead: parsed.data.lead }, output: text })
-    return ok({ text, provider, configured: provider !== 'free', note: provider === 'free' ? 'AI_API_KEY not set - using safe template substitution (no invented facts)' : undefined })
+    const text = await svc.suggestReply(parsed.data.inbound, parsed.data.context || '')
+    await supabase.from('ai_generations').insert({ user_id: auth.userId, lead_id: parsed.data.leadId ?? null, input:{ type:'reply', inbound: parsed.data.inbound }, output: text })
+    return ok({ text, provider, requires_approval: true, note:'AI never sends automatically - user must approve' })
   }catch(e){
     const message = e instanceof Error ? e.message : 'Unknown error'
     return fail('AI request failed - '+message, 502)

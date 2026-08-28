@@ -1,41 +1,114 @@
-import { NextResponse } from 'next/server'
-import { createClient as createServer } from '@/lib/supabase/server'
+import { ok, fail, preflight } from '@/lib/api/response'
+import { resolveUser } from '@/lib/api/auth'
+import { importPayloadSchema, formatZodError } from '@/lib/validation/schemas'
 import { getEmailVerifier } from '@/lib/verification/email'
-function cors(res: NextResponse){ res.headers.set('Access-Control-Allow-Origin','*'); res.headers.set('Access-Control-Allow-Methods','GET,POST,OPTIONS'); res.headers.set('Access-Control-Allow-Headers','Content-Type, Authorization'); return res }
-export async function OPTIONS(){ return cors(new NextResponse(null,{status:204})) }
-export async function POST(req:Request){
+import { verifyPhone } from '@/lib/verification/phone'
+import { scoreLead } from '@/lib/scoring'
+import { z } from 'zod'
+
+export async function OPTIONS(){ return preflight() }
+
+export async function POST(req: Request){
   try{
-    const supabase = await createServer() as any
-    if(!supabase) return cors(NextResponse.json({ success:false, error:'Supabase not configured - set env vars' },{status:503}))
-    // auth: supabase session OR extension token
-    const auth = req.headers.get('authorization') || ''
-    const token = auth.replace('Bearer ','').trim()
-    let userId: string|null = null
-    const { data:{ user } } = await supabase.auth.getUser()
-    if(user) userId = user.id
-    else if(token){
-      const { data: sess } = await supabase.from('extension_sessions').select('user_id').eq('token',token).single()
-      if(sess) userId = sess.user_id
-    }
-    if(!userId) return cors(NextResponse.json({ success:false, error:'Unauthorized - login to CRM or use extension session token' },{status:401}))
-    const body = await req.json()
-    const leads = body.leads || body
-    const projectId = body.projectId || null
-    const normalized = (Array.isArray(leads)?leads:[]).map((l:any)=>({ business_name: l.business_name || l.businessName || 'Unknown', website: l.website, email: l.email, phone: l.phone, city: l.city, state: l.state, country: l.country, niche: l.niche, contact_first_name: l.contact_first_name || l.contactName?.split(' ')[0], contact_last_name: l.contact_last_name, contact_position: l.contact_position, facebook: l.facebook, instagram: l.instagram, linkedin: l.linkedin, source: l.source || 'extension', source_url: l.source_url || l.sourceUrl }))
+    const { auth, supabase } = await resolveUser(req)
+    if(!supabase) return fail(auth.error || 'Supabase not configured', 503)
+    if(!auth.userId) return fail(auth.error || 'Unauthorized', 401)
+
+    let json: unknown
+    try{ json = await req.json() }catch{ return fail('Invalid JSON body', 400) }
+
+    const parsed = importPayloadSchema.safeParse(json)
+    if(!parsed.success) return fail('Validation failed - '+formatZodError(parsed.error as z.ZodError), 422)
+
+    const { leads, projectId } = parsed.data
     const verifier = getEmailVerifier()
-    let inserted=0, duplicates=0
-    for(const raw of normalized){
-      if(!raw.business_name) continue
-      if(raw.email){
-        const v = await verifier.verify(raw.email)
-        raw.email_status = v.status
-        const { data: existing } = await supabase.from('leads').select('id').eq('email', raw.email).limit(1)
-        if(existing && existing.length>0){ duplicates++; continue }
+
+    let inserted = 0
+    let duplicates = 0
+    let possibleDuplicates = 0
+    let failed = 0
+    const errors: string[] = []
+
+    for(const lead of leads){
+      // Server-side verification - never trust extension payload
+      const record: Record<string, unknown> = {
+        business_name: lead.business_name.trim(),
+        business_type: lead.business_type ?? null,
+        niche: lead.niche ?? null,
+        sub_niche: lead.sub_niche ?? null,
+        country: lead.country ?? null,
+        state: lead.state ?? null,
+        city: lead.city ?? null,
+        address: lead.address ?? null,
+        postal_code: lead.postal_code ?? null,
+        website: lead.website ?? null,
+        contact_first_name: lead.contact_first_name ?? null,
+        contact_last_name: lead.contact_last_name ?? null,
+        contact_position: lead.contact_position ?? null,
+        email: lead.email ? lead.email.toLowerCase().trim() : null,
+        phone: lead.phone ?? null,
+        facebook: lead.facebook ?? null,
+        instagram: lead.instagram ?? null,
+        linkedin: lead.linkedin ?? null,
+        source: lead.source ?? 'extension',
+        source_url: lead.source_url ?? null,
+        email_status: 'UNKNOWN',
+        phone_status: 'UNKNOWN',
+        project_id: projectId ?? null,
+        status: 'NEW',
+        user_id: auth.userId,
       }
-      const { error } = await supabase.from('leads').insert({ business_name: raw.business_name, website: raw.website, email: raw.email, email_status: raw.email_status || 'UNKNOWN', phone: raw.phone, city: raw.city, state: raw.state, country: raw.country, niche: raw.niche, contact_first_name: raw.contact_first_name, contact_last_name: raw.contact_last_name, contact_position: raw.contact_position, facebook: raw.facebook, instagram: raw.instagram, linkedin: raw.linkedin, source: raw.source, source_url: raw.source_url, project_id: projectId, status:'NEW', user_id: userId })
-      if(!error) inserted++
+
+      if(record.email){
+        const v = await verifier.verify(record.email as string)
+        record.email_status = v.status
+        if(v.status === 'INVALID'){ record.status = 'INVALID' }
+      }
+      if(record.phone){
+        record.phone_status = verifyPhone(record.phone as string, (record.country as string) || 'US').status
+      }
+      record.lead_score = scoreLead(record)
+
+      // Multi-signal duplicate detection (email / phone / website domain / business name)
+      let isDuplicate = false
+      let isPossible = false
+      if(record.email){
+        const { data } = await supabase.from('leads').select('id').eq('user_id', auth.userId).eq('email', record.email).limit(1)
+        if(data && data.length > 0) isDuplicate = true
+      }
+      if(!isDuplicate && record.phone){
+        const { data } = await supabase.from('leads').select('id').eq('user_id', auth.userId).eq('phone', record.phone).limit(1)
+        if(data && data.length > 0) isDuplicate = true
+      }
+      if(!isDuplicate && record.website){
+        let domain = String(record.website)
+        try{ domain = new URL(domain.startsWith('http')? domain : 'https://'+domain).hostname.replace(/^www\./,'') }catch{}
+        const { data } = await supabase.from('leads').select('id').eq('user_id', auth.userId).ilike('website', '%'+domain+'%').limit(1)
+        if(data && data.length > 0) isDuplicate = true
+      }
+      if(!isDuplicate){
+        const { data } = await supabase.from('leads').select('id').eq('user_id', auth.userId).ilike('business_name', String(record.business_name)).limit(1)
+        if(data && data.length > 0) isPossible = true
+      }
+
+      if(isDuplicate){ duplicates++; continue }
+      if(isPossible){ possibleDuplicates++; record.status = 'REVIEW' }
+
+      const { data: insertedRow, error } = await supabase.from('leads').insert(record).select('id').maybeSingle()
+      if(error){ failed++; errors.push(error.message); continue }
+      inserted++
+
+      if(insertedRow?.id){
+        await supabase.from('activity_logs').insert({ user_id: auth.userId, action:'lead_imported', entity_type:'lead', entity_id: insertedRow.id, details:{ source: record.source, email_status: record.email_status, lead_score: record.lead_score } })
+        await supabase.from('lead_verifications').insert({ lead_id: insertedRow.id, type:'email', status: record.email_status, details:{ verified_at: new Date().toISOString() } })
+      }
     }
-    await supabase.from('activity_logs').insert({ user_id: userId, action:'extension_import', entity_type:'lead', details:{ inserted, duplicates, total: normalized.length } })
-    return cors(NextResponse.json({ success:true, data:{ inserted, duplicates, total: normalized.length }, error:null }))
-  }catch(e:any){ return cors(NextResponse.json({ success:false, error:e.message },{status:500})) }
+
+    if(inserted === 0 && failed > 0) return fail('Import failed - '+errors.slice(0,3).join('; '), 500)
+
+    return ok({ received: leads.length, imported: inserted, duplicates, possible_duplicates: possibleDuplicates, failed, errors: errors.slice(0,5) })
+  }catch(e){
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    return fail('Import failed - '+message, 500)
+  }
 }
