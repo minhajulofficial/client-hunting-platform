@@ -1,12 +1,21 @@
-<!doctype html><html><head><meta charset="utf-8"><style>body{width:360px;font-family:system-ui;padding:16px}button{width:100%;padding:10px;background:#18181b;color:#fff;border-radius:8px;border:0;cursor:pointer}label{display:block;font-size:12px;margin:8px 0 4px}input,select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box}.row{display:flex;gap:8px} .chk{width:auto}</style></head><body>
-<h3>🎯 Client Hunter</h3><div id="status">Connected: <span id="conn">checking...</span> <a href="#" id="reconnect">Reconnect</a></div>
-<label>Project</label><select id="project"><option>USA Dental Outreach</option></select>
-<label>Country</label><select id="country"><option>USA</option><option>UK</option><option>Canada</option></select>
-<label>Location</label><input id="location" placeholder="Miami"/>
+<!doctype html><html><head><meta charset="utf-8"><style>body{width:380px;font-family:system-ui;padding:16px;margin:0}button{width:100%;padding:10px;background:#18181b;color:#fff;border-radius:8px;border:0;cursor:pointer;margin-top:8px}button:disabled{opacity:.5;cursor:not-allowed}label{display:block;font-size:12px;margin:8px 0 4px;font-weight:600}input,select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:13px}.row{display:flex;gap:8px} .chk{width:auto;margin-right:6px}#status{font-size:12px;padding:8px;background:#f4f4f5;border-radius:8px;margin-bottom:12px}.state{font-size:11px;color:#71717a;text-align:center;margin:6px 0}</style></head><body>
+<h3 style="margin:0">🎯 Client Hunter</h3><p style="font-size:11px;color:#71717a;margin:4px 0 12px">Real collection — no mock data</p>
+<div id="status">API: <span id="api">checking...</span> | Auth: <span id="auth">checking...</span> | DB: <span id="db">checking...</span> <a href="#" id="testConn" style="margin-left:8px">Test Connection</a></div>
+<div id="extStatus">Not connected — <a href="#" id="reconnect">Connect to CRM</a></div>
+<label>Project</label><select id="project"><option value="">Select Project (create in CRM first)</option></select>
+<label>Country</label><select id="country"><option>USA</option><option>UK</option><option>Canada</option><option>Bangladesh</option></select>
+<label>State</label><input id="state" placeholder="Florida"/>
+<label>City</label><input id="location" placeholder="Miami"/>
 <label>Niche</label><input id="niche" placeholder="Dental Clinic"/>
 <label>Target Position</label><input id="position" placeholder="Owner / Founder / Manager"/>
-<div style="margin:8px 0"><label>Sources</label><label><input type="checkbox" class="chk" checked> Supported Search</label><label><input type="checkbox" class="chk" checked> Business Directory</label><label><input type="checkbox" class="chk" checked> Website</label><label><input type="checkbox" class="chk" checked> Social Profiles</label></div>
-<div style="margin:8px 0"><label>Data</label><label><input type="checkbox" class="chk" checked> Business</label><label><input type="checkbox" class="chk" checked> Contact</label><label><input type="checkbox" class="chk" checked> Email</label><label><input type="checkbox" class="chk" checked> Phone</label></div>
-<button id="start">START CLIENT HUNT</button>
-<div id="results" style="margin-top:12px; display:none"><hr><p>Found: 87 • Usable: 61 • New: 52 • Duplicates: 9</p><div style="max-height:200px;overflow:auto;border:1px solid #eee;border-radius:6px"><table style="width:100%;font-size:12px"><thead><tr><th>☑</th><th>Business</th><th>Email</th><th>Source</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="row" style="margin-top:8px"><button id="selectAll">Select All</button><button id="import">Import Selected</button></div></div>
+<label>Service</label><input id="service" placeholder="Website + Local SEO"/>
+<div id="stateEl" class="state">IDLE</div>
+<button id="start">START HUNT</button>
+<div id="results" style="margin-top:12px; display:none"><hr>
+<p style="font-size:12px"><span id="found">Found: 0</span> • <span id="usable">Usable: 0</span> • <span id="newc">New: 0</span> • <span id="dup">Duplicates: 0</span></p>
+<p id="sourceStatus" style="font-size:11px;color:#71717a">Current site: <span id="siteSup">checking...</span></p>
+<div style="max-height:200px;overflow:auto;border:1px solid #eee;border-radius:6px"><table style="width:100%;font-size:12px"><thead><tr><th>☑</th><th>Business</th><th>Email</th><th>Source</th></tr></thead><tbody id="tbody"></tbody></table></div>
+<div class="row" style="margin-top:8px"><button id="selectAll" style="flex:1">Select All</button><button id="deselectAll" style="flex:1;background:#fff;color:#18181b;border:1px solid #ddd">Deselect</button></div>
+<button id="import">Import Selected</button>
+</div>
 <script src="popup.js"></script></body></html>
