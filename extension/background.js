@@ -1,7 +1,4 @@
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse)=>{
-  if(msg.type==='EXTRACT'){
-    // Delegates to content script; content.js handles DOM extraction via extractor/normalizer
-    sendResponse({ ok:true });
-  }
-  return true;
+// Minimal MV3 service worker. No secrets, no DB access - all writes go through the authenticated CRM API.
+chrome.runtime.onInstalled.addListener(function(){
+  console.log('Client Hunter installed');
 });

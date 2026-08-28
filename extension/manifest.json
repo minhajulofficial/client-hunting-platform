@@ -1,11 +1,37 @@
 {
   "manifest_version": 3,
   "name": "Client Hunter",
-  "version": "0.1.0",
-  "description": "Collect leads and import to CRM - Source Adapter architecture",
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://*/*", "http://*/*", "https://client-hunting-platform.vercel.app/*", "http://localhost:3000/*"],
-  "action": { "default_popup": "popup.html", "default_title": "Client Hunter" },
-  "background": { "service_worker": "background.js" },
-  "content_scripts": [{ "matches": ["https://*/*","http://*/*"], "js": ["content.js"] }]
+  "version": "0.2.0",
+  "description": "Collect publicly available business leads and import them into your Client Hunter CRM.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://client-hunting-platform-five.vercel.app/*",
+    "http://localhost:3000/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Client Hunter"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }
