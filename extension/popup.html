@@ -1,11 +1,12 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
 *{box-sizing:border-box}
-body{width:390px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:14px;margin:0;color:#18181b;background:#fff}
+body{width:420px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:14px;margin:0;color:#18181b;background:#fff}
 h3{margin:0;font-size:15px}
 .sub{font-size:11px;color:#71717a;margin:3px 0 10px}
 button{width:100%;padding:9px;background:#18181b;color:#fff;border-radius:8px;border:0;cursor:pointer;margin-top:8px;font-size:13px;font-weight:500}
 button:disabled{opacity:.5;cursor:not-allowed}
 button.sec{background:#fff;color:#18181b;border:1px solid #e4e4e7}
+button.stop{background:#dc2626}
 label{display:block;font-size:11px;margin:8px 0 3px;font-weight:600;color:#3f3f46}
 input,select{width:100%;padding:7px;border:1px solid #e4e4e7;border-radius:6px;font-size:13px}
 .row{display:flex;gap:6px}
@@ -15,16 +16,20 @@ input,select{width:100%;padding:7px;border:1px solid #e4e4e7;border-radius:6px;f
 .okb{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
 table{width:100%;font-size:11px;border-collapse:collapse}
 th,td{text-align:left;padding:4px;border-bottom:1px solid #f4f4f5}
-a{color:#18181b}
-.counts{font-size:11px;display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+th{background:#f9fafb;font-weight:600}
+a{color:#18181b;cursor:pointer}
+.counts{font-size:11px;display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 .counts span{background:#f4f4f5;padding:2px 6px;border-radius:99px}
+.section{border-top:1px solid #e4e4e7;padding-top:8px;margin-top:8px}
+#testResult{font-size:11px;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;margin-top:6px;line-height:1.6}
+small{color:#71717a}
 </style></head><body>
 <h3>🎯 Client Hunter</h3>
-<p class="sub">Real collection only — no sample data</p>
+<p class="sub">v<span id="ver">-</span> · Real extraction only — no mock data</p>
 
 <div class="panel">
   API: <b id="api">checking…</b> · DB: <b id="db">checking…</b> · Auth: <b id="auth">checking…</b><br>
-  <a href="#" id="testConn">Test Connection</a> · <a href="#" id="toggleCfg">CRM URL</a>
+  <a id="testConn">Test Connection</a> · <a id="toggleCfg">CRM URL</a>
 </div>
 <div id="cfgBox" style="display:none">
   <label>CRM URL</label>
@@ -35,30 +40,51 @@ a{color:#18181b}
 <div class="panel" id="extStatus">Not connected</div>
 <div class="row"><button id="reconnect" style="flex:1">Connect to CRM</button><button class="sec" id="disconnect" style="flex:1">Disconnect</button></div>
 
-<label>Project *</label><select id="project"><option value="">Loading…</option></select>
-<div class="row"><div style="flex:1"><label>Country</label><input id="country" value="USA"/></div><div style="flex:1"><label>State</label><input id="state" placeholder="Florida"/></div></div>
-<div class="row"><div style="flex:1"><label>City</label><input id="location" placeholder="Miami"/></div><div style="flex:1"><label>Niche</label><input id="niche" placeholder="Dental"/></div></div>
-<label>Target Position</label><input id="position" placeholder="Owner / Founder / Manager"/>
-<label>Service</label><input id="service" placeholder="Website + Local SEO"/>
-
-<div class="panel">Current site: <b id="siteSup">checking…</b><br><span style="color:#71717a">Supported: business website public contact info</span></div>
-
-<div class="state" id="stateEl">IDLE</div>
-<button id="start">START HUNT</button>
-
-<div id="results" style="margin-top:10px;display:none">
-  <div class="counts"><span id="found">Found: 0</span><span id="usable">Usable: 0</span><span id="newc">New: 0</span><span id="dup">Duplicates: 0</span></div>
-  <div style="max-height:180px;overflow:auto;border:1px solid #e4e4e7;border-radius:6px">
-    <table><thead><tr><th>☑</th><th>Business</th><th>Email</th><th>Source</th></tr></thead><tbody id="tbody"></tbody></table>
-  </div>
-  <div class="row"><button class="sec" id="selectAll" style="flex:1">Select All</button><button class="sec" id="deselectAll" style="flex:1">Deselect</button></div>
-  <button id="import">Import Selected</button>
+<div class="section">
+  <label>Project *</label><select id="project"><option value="">Loading…</option></select>
+  <div class="row"><div style="flex:1"><label>Country</label><input id="country" value="USA"/></div><div style="flex:1"><label>State</label><input id="state" placeholder="Florida"/></div></div>
+  <div class="row"><div style="flex:1"><label>City</label><input id="location" placeholder="Miami"/></div><div style="flex:1"><label>Niche</label><input id="niche" placeholder="Dental"/></div></div>
+  <label>Target Position</label><input id="position" placeholder="Owner / Founder / Manager"/>
 </div>
 
-<div class="panel" style="margin-top:10px"><b>Diagnostics</b><br>
-Version: <span id="ver">-</span><br>
-Last request: <span id="lastReq">-</span><br>
-Last error: <span id="lastErr">none</span>
+<div class="section">
+  <div class="panel">
+    Current site: <b id="siteSup" style="color:#71717a">checking…</b><br>
+    <a id="testPage" style="font-size:11px">TEST CURRENT PAGE</a>
+  </div>
+  <div id="testResult" style="display:none"></div>
+</div>
+
+<div class="state" id="stateEl">IDLE</div>
+<div class="row">
+  <button id="start" style="flex:3">START HUNT</button>
+  <button id="stop" class="stop" style="flex:1;display:none">STOP</button>
+</div>
+
+<div id="results" style="margin-top:10px;display:none">
+  <div class="counts">
+    <span id="found">Found: 0</span>
+    <span id="emails">Emails: 0</span>
+    <span id="phones">Phones: 0</span>
+    <span id="socials">Socials: 0</span>
+  </div>
+  <div style="max-height:200px;overflow:auto;border:1px solid #e4e4e7;border-radius:6px">
+    <table><thead><tr><th style="width:30px">☑</th><th>Business</th><th>Email</th><th>Phone</th><th style="width:60px">Social</th></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+  <div class="row">
+    <button class="sec" id="selectAll" style="flex:1">Select All</button>
+    <button class="sec" id="deselectAll" style="flex:1">Deselect</button>
+  </div>
+  <button id="import">IMPORT SELECTED</button>
+  <div class="counts" style="margin-top:4px">
+    <span id="newc">Imported: —</span>
+    <span id="dup">Duplicates: —</span>
+  </div>
+</div>
+
+<div class="section panel" style="font-size:11px">
+  <b>Diagnostics</b><br>
+  <a id="copyDebug" style="font-size:11px">COPY DEBUG INFO</a>
 </div>
 
 <script src="config.js"></script>

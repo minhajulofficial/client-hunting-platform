@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Client Hunter",
-  "version": "0.2.0",
-  "description": "Collect publicly available business leads and import them into your Client Hunter CRM.",
+  "version": "1.0.0",
+  "description": "Extract real business leads from public websites and import them into your Client Hunter CRM.",
   "icons": {
     "16": "icon.png",
     "48": "icon.png",
@@ -16,9 +16,7 @@
   ],
   "host_permissions": [
     "https://client-hunting-platform-five.vercel.app/*",
-    "http://localhost:3000/*",
-    "https://*/*",
-    "http://*/*"
+    "http://localhost:3000/*"
   ],
   "action": {
     "default_popup": "popup.html",
