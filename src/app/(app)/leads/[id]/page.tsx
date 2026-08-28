@@ -4,16 +4,27 @@ import { Badge } from '@/components/ui/badge'
 import { Timeline } from '@/components/leads/Timeline'
 import { VerificationBadge } from '@/components/leads/VerificationBadge'
 import { Composer } from '@/components/email/Composer'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 export default async function LeadDetail({params}:{params:Promise<{id:string}>}){
   const {id}=await params
-  const supabase=await createClient()
-  const { data: lead } = await supabase.from('leads').select('*').eq('id',id).single()
-  const { data: logs } = await supabase.from('activity_logs').select('*').eq('entity_id',id).order('created_at',{ascending:true}).limit(20)
+  const configured=isSupabaseConfigured()
+  let lead:any=null
+  let logs:any[]=[]
+  if(configured){
+    try{
+      const supabase=await createClient()
+      const { data } = await supabase.from('leads').select('*').eq('id',id).single()
+      lead=data
+      const { data: l } = await supabase.from('activity_logs').select('*').eq('entity_id',id).order('created_at',{ascending:true}).limit(20)
+      logs=l||[]
+    }catch{}
+  }
   const l=lead||{ id, business_name:'Lead '+id.slice(0,6), city:'Miami', country:'USA', status:'NEW', email_status:'UNKNOWN', phone_status:'UNKNOWN', lead_score: 40 }
   const events=(logs||[]).map((r:any)=>({date:new Date(r.created_at).toLocaleString(), text: r.action+' '+ (r.details?JSON.stringify(r.details).slice(0,80):'') }))
-  const fallback=[{date:'26 Aug 2026', text:'Lead imported'},{date:'26 Aug 2026', text:'Email verified '+ (l.email_status||'')},{date:'26 Aug 2026', text:'Campaign added'},{date:'27 Aug 2026', text:'Status CONTACTED → REPLIED'}]
-  return <AppShell><div className="flex justify-between items-start"><h1 className="text-2xl font-bold">{l.business_name}</h1><Badge tone={l.status==='WON'?'green':l.status==='REPLIED'?'green':'yellow'}>{l.status}</Badge></div><p className="text-sm text-zinc-500">ID: {id} • {l.city||''} {l.country||''} • Lead score {l.lead_score||0}</p>
+  const fallback=[{date:'26 Aug 2026', text:'Lead imported'},{date:'26 Aug 2026', text:'Email verified '+ (l.email_status||'')},{date:'27 Aug 2026', text:'Status CONTACTED → REPLIED'}]
+  return <AppShell>
+    {!configured && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="text-sm text-amber-800">Supabase not configured — showing demo lead. Configure env to see real data.</p></div>}
+    <div className="flex justify-between items-start"><h1 className="text-2xl font-bold">{l.business_name}</h1><Badge tone={l.status==='WON'?'green':l.status==='REPLIED'?'green':'yellow'}>{l.status}</Badge></div><p className="text-sm text-zinc-500">ID: {id} • {l.city||''} {l.country||''} • Lead score {l.lead_score||0}</p>
     <div className="grid md:grid-cols-3 gap-6 mt-6">
       <div className="md:col-span-2 space-y-6">
         <Card>
