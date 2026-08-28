@@ -1,15 +1,29 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-export async function GET(){
-  const supabase = await createClient()
-  const { data } = await supabase.from('campaigns').select('*').limit(20)
-  return NextResponse.json({ success:true, data:data||[], error:null })
+import { ok, fail, preflight } from '@/lib/api/response'
+import { resolveUser } from '@/lib/api/auth'
+import { campaignInputSchema, formatZodError } from '@/lib/validation/schemas'
+import type { z } from 'zod'
+
+export async function OPTIONS(){ return preflight() }
+
+export async function GET(req: Request){
+  const { auth, supabase } = await resolveUser(req)
+  if(!supabase) return fail(auth.error || 'Supabase not configured', 503)
+  if(!auth.userId) return fail(auth.error || 'Unauthorized', 401)
+  const { data, error } = await supabase.from('campaigns').select('*').eq('user_id', auth.userId).order('created_at',{ ascending:false }).limit(100)
+  if(error) return fail('Failed to load campaigns - '+error.message, 500)
+  return ok(data || [])
 }
-export async function POST(req:Request){
-  const body = await req.json()
-  const supabase = await createClient()
-  const { data:{ user } } = await supabase.auth.getUser()
-  const { data, error } = await supabase.from('campaigns').insert({ ...body, user_id: user?.id }).select().single()
-  if(error) return NextResponse.json({ success:false, error:error.message },{status:500})
-  return NextResponse.json({ success:true, data, error:null })
+
+export async function POST(req: Request){
+  const { auth, supabase } = await resolveUser(req)
+  if(!supabase) return fail(auth.error || 'Supabase not configured', 503)
+  if(!auth.userId) return fail(auth.error || 'Unauthorized', 401)
+  let json: unknown
+  try{ json = await req.json() }catch{ return fail('Invalid JSON body', 400) }
+  const parsed = campaignInputSchema.safeParse(json)
+  if(!parsed.success) return fail('Validation failed - '+formatZodError(parsed.error as z.ZodError), 422)
+  const { data, error } = await supabase.from('campaigns').insert({ ...parsed.data, user_id: auth.userId }).select('*').maybeSingle()
+  if(error) return fail('Create failed - '+error.message, 500)
+  if(data?.id) await supabase.from('activity_logs').insert({ user_id: auth.userId, action:'campaign_created', entity_type:'campaign', entity_id: data.id, details:{ name: parsed.data.name } })
+  return ok(data)
 }
