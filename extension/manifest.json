@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Collect leads and import to CRM - Source Adapter architecture",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://*/*", "http://*/*"],
+  "host_permissions": ["https://*/*", "http://*/*", "https://client-hunting-platform.vercel.app/*", "http://localhost:3000/*"],
   "action": { "default_popup": "popup.html", "default_title": "Client Hunter" },
   "background": { "service_worker": "background.js" },
   "content_scripts": [{ "matches": ["https://*/*","http://*/*"], "js": ["content.js"] }]

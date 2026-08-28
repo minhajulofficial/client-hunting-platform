@@ -1,4 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr'
 export function createClient() {
-  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error('Supabase not configured - set NEXT_PUBLIC_SUPABASE_URL and ANON_KEY in .env.local and Vercel env')
+  return createBrowserClient(url, key)
 }
+export function isSupabaseConfigured(){ return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY }
