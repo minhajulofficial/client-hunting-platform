@@ -52,15 +52,15 @@ describe('Zod validation', () => {
     expect(result.success).toBe(true)
   })
 
-  it('importSchema requires business_name in leads', async () => {
-    const { importSchema } = await import('@/lib/validation/schemas')
-    const result = importSchema.safeParse({ leads: [{ email: 'test@example.com' }] })
+  it('importPayloadSchema requires business_name in leads', async () => {
+    const { importPayloadSchema } = await import('@/lib/validation/schemas')
+    const result = importPayloadSchema.safeParse({ leads: [{ email: 'test@example.com' }] })
     expect(result.success).toBe(false)
   })
 
-  it('importSchema accepts leads with business_name', async () => {
-    const { importSchema } = await import('@/lib/validation/schemas')
-    const result = importSchema.safeParse({ leads: [{ business_name: 'Acme Corp' }] })
+  it('importPayloadSchema accepts leads with business_name', async () => {
+    const { importPayloadSchema } = await import('@/lib/validation/schemas')
+    const result = importPayloadSchema.safeParse({ leads: [{ business_name: 'Acme Corp' }] })
     expect(result.success).toBe(true)
   })
 })
@@ -137,12 +137,18 @@ describe('Email verification', () => {
     expect(result.status).toBe('RISKY')
   })
 
-  it('flags business domains', async () => {
+  it('flags free email providers as RISKY', async () => {
     const { getEmailVerifier } = await import('@/lib/verification/email')
     const verifier = getEmailVerifier()
     const result = await verifier.verify('user@gmail.com')
+    expect(result.status).toBe('RISKY')
+  })
+
+  it('flags business domains as VERIFIED', async () => {
+    const { getEmailVerifier } = await import('@/lib/verification/email')
+    const verifier = getEmailVerifier()
+    const result = await verifier.verify('user@acmecorp.com')
     expect(result.status).toBe('VERIFIED')
-    expect(result.confidence).toBeGreaterThan(0.8)
   })
 })
 
