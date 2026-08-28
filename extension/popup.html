@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{width:360px;font-family:system-ui;padding:16px}button{width:100%;padding:10px;background:#18181b;color:#fff;border-radius:8px;border:0;cursor:pointer}label{display:block;font-size:12px;margin:8px 0 4px}input,select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box}.row{display:flex;gap:8px} .chk{width:auto}</style></head><body>
+<h3>🎯 Client Hunter</h3><div id="status">Connected: <span id="conn">checking...</span> <a href="#" id="reconnect">Reconnect</a></div>
+<label>Project</label><select id="project"><option>USA Dental Outreach</option></select>
+<label>Country</label><select id="country"><option>USA</option><option>UK</option><option>Canada</option></select>
+<label>Location</label><input id="location" placeholder="Miami"/>
+<label>Niche</label><input id="niche" placeholder="Dental Clinic"/>
+<label>Target Position</label><input id="position" placeholder="Owner / Founder / Manager"/>
+<div style="margin:8px 0"><label>Sources</label><label><input type="checkbox" class="chk" checked> Supported Search</label><label><input type="checkbox" class="chk" checked> Business Directory</label><label><input type="checkbox" class="chk" checked> Website</label><label><input type="checkbox" class="chk" checked> Social Profiles</label></div>
+<div style="margin:8px 0"><label>Data</label><label><input type="checkbox" class="chk" checked> Business</label><label><input type="checkbox" class="chk" checked> Contact</label><label><input type="checkbox" class="chk" checked> Email</label><label><input type="checkbox" class="chk" checked> Phone</label></div>
+<button id="start">START CLIENT HUNT</button>
+<div id="results" style="margin-top:12px; display:none"><hr><p>Found: 87 • Usable: 61 • New: 52 • Duplicates: 9</p><div style="max-height:200px;overflow:auto;border:1px solid #eee;border-radius:6px"><table style="width:100%;font-size:12px"><thead><tr><th>☑</th><th>Business</th><th>Email</th><th>Source</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="row" style="margin-top:8px"><button id="selectAll">Select All</button><button id="import">Import Selected</button></div></div>
+<script src="popup.js"></script></body></html>

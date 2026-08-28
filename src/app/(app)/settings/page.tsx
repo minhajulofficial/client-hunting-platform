@@ -1,0 +1,5 @@
+import { AppShell } from '@/components/layout/AppShell'
+import { Card } from '@/components/ui/card'
+export default function Settings(){
+  return <AppShell><h1 className="text-2xl font-bold">Settings</h1><div className="grid md:grid-cols-2 gap-6 mt-6"><Card><h3 className="font-semibold">General</h3><p className="text-sm text-zinc-500">Site name, logo, timezone, default country/language</p></Card><Card><h3 className="font-semibold">Lead</h3><p className="text-sm text-zinc-500">Verification, duplicate, scoring settings</p></Card><Card><h3 className="font-semibold">AI</h3><p className="text-sm text-zinc-500">Provider, API key (server-side only), model, default prompts</p></Card><Card><h3 className="font-semibold">Campaign</h3><p className="text-sm text-zinc-500">Sending limits, follow-up rules, unsubscribe handling</p></Card></div><div className="flex gap-3 mt-6"><a href="/settings/api" className="px-4 py-2 border rounded-lg text-sm">API Keys</a><a href="/settings/extension" className="px-4 py-2 border rounded-lg text-sm">Extension</a></div></AppShell>
+}
