@@ -57,6 +57,7 @@ create table if not exists leads (
   facebook text,
   instagram text,
   linkedin text,
+  twitter text,
   other_socials jsonb default '{}',
   status text default 'NEW',
   lead_score int default 0,

@@ -50,6 +50,7 @@ export async function POST(req: Request){
         facebook: lead.facebook ?? null,
         instagram: lead.instagram ?? null,
         linkedin: lead.linkedin ?? null,
+        twitter: lead.twitter ?? null,
         source: lead.source ?? 'extension',
         source_url: lead.source_url ?? null,
         email_status: 'UNKNOWN',

@@ -19,6 +19,7 @@ export const leadInputSchema = z.object({
   facebook: z.string().optional().nullable(),
   instagram: z.string().optional().nullable(),
   linkedin: z.string().optional().nullable(),
+  twitter: z.string().optional().nullable(),
   source: z.string().optional().nullable(),
   source_url: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
