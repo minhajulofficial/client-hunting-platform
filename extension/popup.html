@@ -23,9 +23,10 @@ a{color:#18181b;cursor:pointer}
 .section{border-top:1px solid #e4e4e7;padding-top:8px;margin-top:8px}
 #testResult{font-size:11px;padding:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;margin-top:6px;line-height:1.6}
 small{color:#71717a}
+.hint{font-size:10px;color:#71717a;margin-top:2px}
 </style></head><body>
 <h3>🎯 Client Hunter</h3>
-<p class="sub">v<span id="ver">-</span> · Real extraction only — no mock data</p>
+<p class="sub">v<span id="ver">-</span> · Enter niche + location → auto search → extract → import</p>
 
 <div class="panel">
   API: <b id="api">checking…</b> · DB: <b id="db">checking…</b> · Auth: <b id="auth">checking…</b><br>
@@ -34,7 +35,7 @@ small{color:#71717a}
 <div id="cfgBox" style="display:none">
   <label>CRM URL</label>
   <input id="crmUrl" placeholder="https://your-crm.vercel.app"/>
-  <button class="sec" id="saveCfg">Save CRM URL</button>
+  <button class="sec" id="saveCfg">Save</button>
 </div>
 
 <div class="panel" id="extStatus">Not connected</div>
@@ -42,22 +43,30 @@ small{color:#71717a}
 
 <div class="section">
   <label>Project *</label><select id="project"><option value="">Loading…</option></select>
-  <div class="row"><div style="flex:1"><label>Country</label><input id="country" value="USA"/></div><div style="flex:1"><label>State</label><input id="state" placeholder="Florida"/></div></div>
-  <div class="row"><div style="flex:1"><label>City</label><input id="location" placeholder="Miami"/></div><div style="flex:1"><label>Niche</label><input id="niche" placeholder="Dental"/></div></div>
+
+  <div class="row">
+    <div style="flex:1"><label>Niche / Business Type</label><input id="niche" placeholder="Dental, Restaurant, Agency…"/></div>
+    <div style="flex:1"><label>City</label><input id="location" placeholder="Miami"/></div>
+  </div>
+  <div class="row">
+    <div style="flex:1"><label>State</label><input id="state" placeholder="Florida"/></div>
+    <div style="flex:1"><label>Country</label><input id="country" value="USA"/></div>
+  </div>
   <label>Target Position</label><input id="position" placeholder="Owner / Founder / Manager"/>
+  <p class="hint">Extension will open Google Maps with: <b id="searchQuery">dental Miami Florida USA</b></p>
 </div>
 
 <div class="section">
   <div class="panel">
     Current site: <b id="siteSup" style="color:#71717a">checking…</b><br>
-    <a id="testPage" style="font-size:11px">TEST CURRENT PAGE</a>
+    <a id="testPage">TEST CURRENT PAGE</a>
   </div>
   <div id="testResult" style="display:none"></div>
 </div>
 
-<div class="state" id="stateEl">IDLE</div>
+<div class="state" id="stateEl">READY</div>
 <div class="row">
-  <button id="start" style="flex:3">START HUNT</button>
+  <button id="start" style="flex:3">🔍 START HUNT</button>
   <button id="stop" class="stop" style="flex:1;display:none">STOP</button>
 </div>
 
@@ -69,7 +78,7 @@ small{color:#71717a}
     <span id="socials">Socials: 0</span>
   </div>
   <div style="max-height:200px;overflow:auto;border:1px solid #e4e4e7;border-radius:6px">
-    <table><thead><tr><th style="width:30px">☑</th><th>Business</th><th>Email</th><th>Phone</th><th style="width:60px">Social</th></tr></thead><tbody id="tbody"></tbody></table>
+    <table><thead><tr><th style="width:30px">☑</th><th>Business</th><th>Email</th><th>Phone</th><th style="width:50px">Web</th></tr></thead><tbody id="tbody"></tbody></table>
   </div>
   <div class="row">
     <button class="sec" id="selectAll" style="flex:1">Select All</button>
@@ -83,9 +92,23 @@ small{color:#71717a}
 </div>
 
 <div class="section panel" style="font-size:11px">
-  <b>Diagnostics</b><br>
-  <a id="copyDebug" style="font-size:11px">COPY DEBUG INFO</a>
+  <a id="copyDebug">COPY DEBUG INFO</a>
 </div>
 
 <script src="config.js"></script>
-<script src="popup.js"></script></body></html>
+<script src="popup.js"></script>
+<script>
+// Live update search query preview
+function updateQuery(){
+  const parts = [
+    document.getElementById('niche').value,
+    document.getElementById('location').value,
+    document.getElementById('state').value,
+    document.getElementById('country').value
+  ].filter(Boolean).join(' ');
+  document.getElementById('searchQuery').textContent = parts || '(enter niche or location above)';
+}
+['niche','location','state','country'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateQuery);
+});
+</script></body></html>
